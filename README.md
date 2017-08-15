@@ -105,6 +105,9 @@ firewall-cmd --get-active-zones
 
 ```
 
+You can get more details about each of these services by looking at their associated .xml file within the /usr/lib/firewalld/services directory
+
+
 > Adjusting the Default Zone
 
 If all of your interfaces can best be handled by a single zone, it's probably easier to just select the best default zone and then use that for your configuration.
@@ -115,17 +118,84 @@ sudo firewall-cmd --set-default-zone=home
 
 ```
 
+> Setup web server to test our firewall
 
-> Setting Rules for your Applications
+```sh
+# install http server
+yum -y install httpd
+
+# install wget for test
+yum install -y wget 
+
+# start http service
+systemctl enable httpd
+systemctl start httpd
+systemctl status httpd
+
+# create web page for test
+mkdir -p /var/www/html/
+echo "Hello world" > /var/www/html/index.html
+
+# go to http:[your_public_ip]
+# you can see you don't have access yet. so you need to configure firewall to allow http or open port 80.
+```
 
 
+> Setting Rules for your Applications: adding a Service to your Zones
+
+```sh
+# list services manged by firewall
+firewall-cmd --get-services
+
+# chekc public zone services
+firewall-cmd --zone=public --list-services
+
+# add http service into public zone
+sudo firewall-cmd --zone=public --add-service=http --permanent # add permanent rule
+sudo firewall-cmd --zone=public --add-service=http # add temporary rule. Role will e lost after reboot
+
+# chekc again public zone services. You should http
+firewall-cmd --zone=public --list-services
+
+```
+
+> What If No Appropriate Service Is Available?  
+
+The firewall services that are included with the firewalld installation represent many of the most common requirements for applications that you may wish to allow access to. However, there will likely be scenarios where these services do not fit your requirements.
+
+In this situation, you have two options.
+
+Opening a Port for your Zones
+The easiest way to add support for your specific application is to open up the ports that it uses in the appropriate zone(s). This is as easy as specifying the port or port range, and the associated protocol for the ports you need to open.
+
+```sh
+# open port
+firewall-cmd --zone=internal --add-port=80/tcp
+
+# list port 
+firewall-cmd --list-ports
+
+```
 
 
+> Remove service or port
+
+```sh
+# remove service
+firewall-cmd --zone=public --remove-service=http
+
+# remove port
+firewall-cmd --zone=internal --remove-port=80/tcp
+```
 
 
+> Enable Your Firewall to Start at Boot
 
+```sh
+sudo systemctl enable firewalld
+```
 
- 
+https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-using-firewalld-on-centos-7 
  
  
  
